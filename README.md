@@ -20,7 +20,7 @@ The Sharpe almost halves once the post-Feb 2026 period (after the HDFC governanc
 
 ## Demo
 
-**Live Streamlit app:** [chaitanya-pairs-trading.streamlit.app](https://chaitanya-pairs-trading.streamlit.app/)
+**Live Streamlit app:** [pairs-trading-chaitanya.streamlit.app](https://pairs-trading-chaitanya.streamlit.app/)
 **Walkthrough notebook:** [`notebooks/analysis.ipynb`](notebooks/analysis.ipynb)
 
 ![Multi-pair P&L comparison](results/multi_pair_pnl.png)
