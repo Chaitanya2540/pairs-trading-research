@@ -76,7 +76,7 @@ For two prices `leg1, leg2`, fit `leg1 = α + β · leg2 + ε` to define a hedge
 ## Run it locally
 
 ```bash
-git clone https://github.com/chaitanyagupta/pairs-trading-research.git
+git clone https://github.com/Chaitanya2540/pairs-trading-research.git
 cd pairs-trading-research
 
 python -m venv .venv && source .venv/bin/activate
