@@ -1,0 +1,42 @@
+[
+  {
+    "mode": "Static \u03b2       | Full",
+    "n_days": 437,
+    "n_trades": 7,
+    "win_rate_pct": 71.43,
+    "total_pnl": 87.41,
+    "sharpe": 0.571,
+    "max_dd_pct": -57.38,
+    "profit_factor": 4.4
+  },
+  {
+    "mode": "Rolling \u03b2-252  | Full",
+    "n_days": 186,
+    "n_trades": 3,
+    "win_rate_pct": 66.67,
+    "total_pnl": 153.46,
+    "sharpe": 1.7374,
+    "max_dd_pct": -394.45,
+    "profit_factor": 13.96
+  },
+  {
+    "mode": "Static \u03b2       | Stable",
+    "n_days": 397,
+    "n_trades": 6,
+    "win_rate_pct": 83.33,
+    "total_pnl": 93.47,
+    "sharpe": 1.0046,
+    "max_dd_pct": -52.03,
+    "profit_factor": 5.53
+  },
+  {
+    "mode": "Rolling \u03b2-252  | Stable",
+    "n_days": 146,
+    "n_trades": 2,
+    "win_rate_pct": 50.0,
+    "total_pnl": 61.72,
+    "sharpe": 1.1255,
+    "max_dd_pct": -394.45,
+    "profit_factor": 6.21
+  }
+]

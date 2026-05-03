@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Notebook autosaves
+*.ipynb_checkpoints
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Build / deploy
+build/
+dist/
+
+# results/ is checked in: charts and JSON exports are referenced from the
+# README and docs, and a fresh clone needs them visible without re-running
+# the pipeline. Add specific files here only if they get too large.
