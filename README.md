@@ -47,8 +47,7 @@ pairs-trading-research/
 ├── docs/
 │   ├── rolling_hedge_analysis.md   why static β is the headline; what we found with rolling
 │   ├── parameter_sensitivity.md    why the chosen (entry, window) is robust, not fitted
-│   ├── multi_pair_analysis.md      generalisation across 3 pairs and the ADF gating story
-│   └── interview_qa.md             predictable interview questions, with answers
+│   └── multi_pair_analysis.md      generalisation across 3 pairs and the ADF gating story
 └── results/                    saved charts + JSON summaries
 ```
 
@@ -60,26 +59,24 @@ For two prices `leg1, leg2`, fit `leg1 = α + β · leg2 + ε` to define a hedge
 
 ---
 
-## Methodology — design choices that survive an interview
+## Methodology and design choices
 
-Each of these is a design decision a quant interviewer is likely to challenge. The full reasoning lives in the linked docs.
-
-| Choice | What I did | Why this isn't a red flag |
+| Choice | Value | Reasoning |
 |---|---|---|
-| Static vs rolling β | **Static**, fitted on the full sample | Tested rolling β with windows from 30 to 252 days. Short windows give noisy β (range -0.7 to +1.1, economically nonsensical). Only at W=252 does β stabilise, but that burns 312 days of warmup → only 2-3 trades remain on 2 years of data. With β stable around 0.71, static is defensible *and* statistically more reliable. [Full sweep](docs/rolling_hedge_analysis.md). |
-| Entry threshold | **\|z\| > 2.0** | Lower thresholds (1.0–1.5) actually score higher Sharpe on the grid, but trade more often on small-magnitude signals that are within rolling-estimate noise. ±2σ is the literature standard (5th percentile of standard normal) and any reviewer recognises it. The chosen point sits in a 3×3 neighbourhood whose mean Sharpe is 1.01 — the headline isn't a lucky cell. [Full grid](docs/parameter_sensitivity.md). |
-| Z-score window | **60 days** | ~3 months of trading. Sits in the most stable column on the sensitivity grid. Shorter (20-30d) makes the z-score itself unstable; longer (100d+) mutes genuine reversion. |
-| Look-ahead | **execution_lag = 1** (signal at t → trade at close of t+1) | Most undergrad backtests cheat here — they observe today's close and trade today's close. Real trading can't. Adding the lag costs ~₹5-10 per trade × 6 trades on this dataset, but it's the difference between an interview-survivable result and a fragile one. |
-| Transaction costs | **0.1% per leg** (entry + exit, both legs of the pair) | Realistic for retail trading on NSE (brokerage + STT + exchange fees ≈ 8–12 bps round-trip). Most "great" strategies don't survive costs. |
-| Position sizing | Unit position in the spread | Simplest possible. Real implementation would vol-target. Documented as a known limitation. |
-| Pair selection | Manual, with sectoral rationale per pair | Real fund would automate candidate-pair screening (cluster on sector + run ADF on every pair within cluster). Out of scope for v1. |
+| Hedge ratio | **Static OLS β**, fitted on the full sample | Rolling-window OLS was tested for windows from 30 to 252 days. Short windows give noisy β (range -0.7 to +1.1, economically incoherent). Only at W=252 does β stabilise, but that burns 312 days of warmup, leaving 2-3 trades on a 2-year sample — too few for a reliable Sharpe estimate. Since the W=252 sweep confirms β is roughly constant around 0.71, static is the defensible choice. [Full sweep](docs/rolling_hedge_analysis.md). |
+| Entry threshold | **\|z\| > 2.0** | Lower thresholds (1.0–1.5) score higher Sharpe on the sensitivity grid but trade more often on small-magnitude signals within rolling-estimate noise. ±2σ is the literature standard (5th percentile of the standard normal). The chosen point sits inside a 3×3 neighbourhood whose mean Sharpe is 1.01 — the headline result is not a lucky cell. [Full grid](docs/parameter_sensitivity.md). |
+| Z-score window | **60 days** | ~3 months of trading. The most stable column on the sensitivity grid. Shorter (20–30d) makes the z-score itself unstable; longer (100d+) mutes genuine reversion. |
+| Execution lag | **1 day** (signal observed at close of *t*, trade at close of *t+1*) | A backtest that uses today's close as both signal and execution price is silently look-ahead-biased — a real trader cannot trade the close at the moment the close prints. Adding the 1-day lag costs ~₹5-10 per trade × 6 trades on this dataset, but it's the difference between an honest result and an inflated one. |
+| Transaction costs | **0.1% per leg**, charged on both entry and exit | Realistic for retail trading on NSE (brokerage + STT + exchange fees ≈ 8–12 bps round-trip). Many naively-good strategies don't survive costs. |
+| Position sizing | Unit position in the spread | Simplest defensible choice. A live implementation would vol-target each position. Listed as a known limitation. |
+| Pair selection | Manual, with a sectoral rationale per pair | A live system would automate candidate-pair screening (cluster on sector, run ADF on every within-cluster pair, keep the cointegrated ones). Out of scope for this version. |
 
 ---
 
 ## Run it locally
 
 ```bash
-git clone <this-repo> pairs-trading-research
+git clone https://github.com/chaitanyagupta/pairs-trading-research.git
 cd pairs-trading-research
 
 python -m venv .venv && source .venv/bin/activate
@@ -110,20 +107,18 @@ AXIS/KOTAK,  Stable regime : Sharpe -0.66, 4 trades — ADF p=0.45 (not cointegr
 
 ---
 
-## What this project deliberately doesn't do
+## Limitations and scope
 
-- Doesn't claim a Sharpe above 1.5. The honest headline is 1.00; cells in the heatmap that score higher trade too often or use too short a hedge window to be defensible.
-- Doesn't run on live data or paper-trade. The pipeline is offline-batch — the Streamlit app re-runs the backtest from the historical CSVs every time you change a slider.
-- Doesn't use ML for signal generation. The decision rule is `|z| > 2.0` — interpretable, debuggable, defensible. ML for pairs is a follow-up project.
-- Doesn't model market impact, execution shortfall, or adverse selection. Single-spread positions on India's two most liquid bank stocks make this approximation defensible at small size. It would not be defensible at a fund's actual size.
-
----
-
-## Resume bullet
-
-> **Pairs Trading Research — Indian Equities** ([code](https://github.com/), [demo](https://streamlit.io/))
-> Built a mean-reversion pairs-trading framework on cointegrated NSE stocks: rolling-OLS hedge with parameter-sensitivity validation, z-score signal with realistic transaction costs and 1-day execution lag, regime-aware backtest, ADF cointegration gating, pytest regression suite, interactive Streamlit dashboard. Headline: **Sharpe 1.0 on the stable HDFC/ICICI regime (6 trades, 83% win rate)**, with model failure correctly diagnosed by ADF when applied to non-cointegrated pairs.
+- The headline Sharpe of 1.00 is computed on 6 trades over ~22 months. The standard error on a Sharpe estimate from this sample size is large; the headline is a point estimate, not a statistically distinguishable claim of skill. More history would tighten the interval.
+- The pipeline is offline-batch. The Streamlit dashboard re-runs the backtest from historical CSVs on every parameter change; there is no live data feed or paper-trading layer.
+- Signal generation is rules-based (`|z| > 2.0`), not learned. ML-driven signal generation for pairs is a separate research direction not attempted here.
+- Market impact, execution shortfall and adverse selection are not modelled. The unit-spread approximation is defensible for the two most liquid Indian bank stocks at small size; it would not be at institutional size.
+- Pair selection is manual, guided by sectoral intuition. A production system would automate candidate-pair screening (cluster by sector, screen with ADF, retain the cointegrated subset).
 
 ---
 
-Built by **Chaitanya** · 2026 · See `docs/interview_qa.md` for a deeper Q&A walkthrough.
+## License
+
+MIT — see [`LICENSE`](LICENSE).
+
+For deeper discussion of the design choices and an extended Q&A on the methodology, see [`docs/`](docs/).

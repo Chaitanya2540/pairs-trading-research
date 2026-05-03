@@ -13,8 +13,8 @@ from pairs.pipeline import run_pipeline, PipelineParams
 
 
 # ── Stable regime (Apr 2024 – Jan 2026) ──────────────────────────────────────
-# Headline numbers reported in README, results/final_results.md, and the
-# resume bullet. Refit only if the strategy has changed intentionally.
+# Headline numbers reported in README and results/final_results.md.
+# Refit only if the strategy has changed intentionally.
 
 class TestStableRegimeHDFC_ICICI:
     @pytest.fixture(scope="class")
@@ -28,8 +28,8 @@ class TestStableRegimeHDFC_ICICI:
         assert result["summary"]["win_rate_pct"] == pytest.approx(83.33, abs=0.05)
 
     def test_sharpe(self, result):
-        # Sharpe rounded to 2dp is the resume number — keep the tolerance
-        # tight so a real regression breaks the build.
+        # Headline Sharpe figure — keep the tolerance tight so any real
+        # regression breaks the build.
         assert result["summary"]["sharpe"] == pytest.approx(1.00, abs=0.02)
 
     def test_max_drawdown_pct(self, result):

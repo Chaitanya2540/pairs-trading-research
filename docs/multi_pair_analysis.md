@@ -47,13 +47,13 @@ Three pairs, three predictions, three correct verdicts. The test isn't perfect (
 **Why Infy/TCS isn't cointegrated despite "looking like" they should be.**
 Both companies serve overlapping clients in similar segments, but Infosys went through a CEO transition and management restructuring during 2024 that changed its growth trajectory relative to TCS. The two stocks share macro factors (USD-INR, US tech demand) but their *idiosyncratic* paths diverged enough that the spread itself drifts rather than mean-reverts. The ADF test catches this; visual intuition does not.
 
-**Why this is the strongest possible interview result.**
-A common red flag in pairs-trading projects is "I tried 5 pairs and they all worked". That's almost certainly cherry-picking or framework error. The honest result — "I tested 3 pairs, one worked, two didn't, and my pre-trade diagnostic correctly predicted which would work" — demonstrates:
+**Why this multi-pair result matters.**
+A common failure mode in pairs-trading work is reporting positive results on every pair tested — usually a sign of cherry-picking or a framework error. The result here — "three pairs tested, one worked, two did not, and the pre-trade diagnostic correctly predicted which" — demonstrates:
 
-1. The framework wasn't built around a single dataset.
-2. The diagnostic test (ADF) is doing what it's supposed to do.
-3. The author is willing to report null results, not just headline wins.
-4. There's a clear, defensible answer to "how would you decide whether to trade a new pair?" — *run the cointegration test, and only trade pairs that pass.*
+1. The framework was not built around a single dataset.
+2. The diagnostic test (ADF) is doing what it is supposed to do.
+3. Null results are reported, not hidden.
+4. There is a clear answer to "how would you decide whether to trade a new pair?" — run the cointegration test, and only trade pairs that pass.
 
 ## Caveats
 

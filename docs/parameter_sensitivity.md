@@ -1,6 +1,6 @@
 # Parameter Sensitivity — Robustness of the Headline Sharpe
 
-If the only configuration that produces a positive Sharpe is the exact one you put on your resume, you've overfit. This note shows that the chosen configuration sits inside a broad, consistently positive region of parameter space — the headline result is not a fluke of the grid.
+If the only configuration that produces a positive Sharpe is the exact one chosen as the headline, the strategy is overfit. This note shows that the chosen configuration sits inside a broad, consistently positive region of parameter space — the headline result is not a fluke of the grid.
 
 ## Setup
 

@@ -154,7 +154,7 @@ with st.sidebar:
     st.divider()
     st.caption(
         "Built by Chaitanya. Source: "
-        "[GitHub](https://github.com/) · See `docs/` for full methodology."
+        "[GitHub](https://github.com/Chaitanya2540/pairs-trading-research) · See `docs/` for full methodology."
     )
 
 
