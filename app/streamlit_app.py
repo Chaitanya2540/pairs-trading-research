@@ -13,36 +13,44 @@ Run from the repo root:
 from __future__ import annotations
 
 import sys
-from dataclasses import asdict
+import traceback
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
-from plotly.subplots import make_subplots
-from statsmodels.tsa.stattools import adfuller
 
-# Make src/ importable when running `streamlit run app/streamlit_app.py`
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "src"))
-
-from pairs.data import PAIR_REGISTRY, load_pair  # noqa: E402
-from pairs.pipeline import PipelineParams, run_pipeline  # noqa: E402
-from pairs.signals import (  # noqa: E402
-    static_hedge_ratio,
-    rolling_hedge_ratio,
-    build_spread,
-    zscore as compute_zscore,
-)
-
-
-# ─── Page setup ──────────────────────────────────────────────────────────────
+# Page config must be the very first Streamlit call. Done eagerly so the
+# browser tab title and layout are set even if an import below fails.
 st.set_page_config(
     page_title="Pairs Trading Research",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# All other imports go inside a try/except so any failure (missing package,
+# bad path, etc.) surfaces in the UI instead of leaving a blank page.
+try:
+    import numpy as np
+    import pandas as pd
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    from statsmodels.tsa.stattools import adfuller
+
+    ROOT = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(ROOT / "src"))
+
+    from pairs.data import PAIR_REGISTRY, load_pair
+    from pairs.pipeline import PipelineParams, run_pipeline
+    from pairs.signals import (
+        static_hedge_ratio,
+        rolling_hedge_ratio,
+        build_spread,
+        zscore as compute_zscore,
+    )
+except Exception as exc:  # pragma: no cover  — defensive UI-level handler
+    st.error(f"Startup import failed: {type(exc).__name__}: {exc}")
+    st.code(traceback.format_exc())
+    st.stop()
+
 
 st.markdown(
     """
@@ -57,12 +65,12 @@ st.markdown(
 )
 
 
-# ─── Cached pipeline runner ──────────────────────────────────────────────────
-@st.cache_data(show_spinner="Running backtest…")
-def cached_pipeline(pair_id: str, params_dict: dict) -> dict:
-    params = PipelineParams(**params_dict)
+# ─── Pipeline runner ─────────────────────────────────────────────────────────
+# Note: no @st.cache_data here. Some Streamlit versions silently fail to hash
+# dict arguments, which produces a blank page with no visible error. The
+# pipeline runs in ~50ms anyway, so we just call it on every rerun.
+def run_pairs_pipeline(pair_id: str, params: PipelineParams) -> dict:
     r = run_pipeline(pair_id, params)
-    # Cache-friendly: drop the dataclass (Pair) and rehydrate downstream
     return {
         "pair_id": r["pair"].id,
         "leg1_label": r["pair"].leg1,
@@ -158,20 +166,26 @@ with st.sidebar:
     )
 
 
-# Compose params and run
-params_dict = asdict(PipelineParams(
-    window=z_window,
-    entry_thr=entry_thr,
-    exit_thr=exit_thr,
-    cost_per_leg=cost_pct / 100.0,
-    hedge_mode=hedge_mode,
-    hedge_window=hedge_window,
-    start=start_str,
-    end=end_str,
-))
-
-result = cached_pipeline(pair_id, params_dict)
-summary = result["summary"]
+# Compose params and run the pipeline. Wrapped in try/except so any runtime
+# failure (e.g. missing CSV, division by zero on a degenerate spread) shows
+# in the UI as a visible error rather than a blank page.
+try:
+    params = PipelineParams(
+        window=z_window,
+        entry_thr=entry_thr,
+        exit_thr=exit_thr,
+        cost_per_leg=cost_pct / 100.0,
+        hedge_mode=hedge_mode,
+        hedge_window=hedge_window,
+        start=start_str,
+        end=end_str,
+    )
+    result = run_pairs_pipeline(pair_id, params)
+    summary = result["summary"]
+except Exception as exc:
+    st.error(f"Pipeline failed: {type(exc).__name__}: {exc}")
+    st.code(traceback.format_exc())
+    st.stop()
 
 
 # ─── Header ──────────────────────────────────────────────────────────────────
@@ -425,22 +439,22 @@ with tab_diag:
     alt_cols = st.columns(2)
     with alt_cols[0]:
         st.markdown("**Static β · ±2σ entry · 60-day window**")
-        ref = cached_pipeline(pair_id, asdict(PipelineParams(
+        ref = run_pairs_pipeline(pair_id, PipelineParams(
             window=60, entry_thr=2.0, exit_thr=0.5, cost_per_leg=cost_pct/100,
             hedge_mode="static",
             start=start_str, end=end_str,
-        )))
+        ))
         st.metric("Sharpe", f"{ref['summary']['sharpe']:.2f}",
                   delta=f"{ref['summary']['sharpe'] - summary['sharpe']:+.2f} vs current")
         st.caption(f"{ref['summary']['n_trades']} trades · "
                    f"win {ref['summary']['win_rate_pct']:.0f}%")
     with alt_cols[1]:
         st.markdown("**Rolling β-252 · ±2σ entry · 60-day window**")
-        alt = cached_pipeline(pair_id, asdict(PipelineParams(
+        alt = run_pairs_pipeline(pair_id, PipelineParams(
             window=60, entry_thr=2.0, exit_thr=0.5, cost_per_leg=cost_pct/100,
             hedge_mode="rolling", hedge_window=252,
             start=start_str, end=end_str,
-        )))
+        ))
         st.metric("Sharpe", f"{alt['summary']['sharpe']:.2f}",
                   delta=f"{alt['summary']['sharpe'] - summary['sharpe']:+.2f} vs current")
         st.caption(f"{alt['summary']['n_trades']} trades · "
